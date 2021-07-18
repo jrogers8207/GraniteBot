@@ -8,7 +8,7 @@ import rtoml
 import twint
 
 # Perform startup tasks.
-logging.basicConfig(filename="log.txt", level=logging.DEBUG, format=" %(asctime)s - %(levelname)s- %(message)s")
+logging.basicConfig(filename="log.txt", level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s")
 
 # Create and setup configuration file if it doesn't exist
 configurationFilePath = Path("config.toml")
@@ -25,4 +25,3 @@ if not configurationFilePath.is_file():
 logging.info("STARTUP: config.toml exists. Continuing...")
 logging.info("STARTUP: Parsing config.toml...")
 configuration = rtoml.load(configurationFilePath)
-
