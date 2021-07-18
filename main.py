@@ -2,13 +2,14 @@ import datetime
 import logging
 from pathlib import Path
 import sys
+import threading
 import time
 
 import rtoml
 import twint
 
 # Perform startup tasks.
-logging.basicConfig(filename="log.txt", level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s")
 
 # Create and setup configuration file if it doesn't exist
 configurationFilePath = Path("config.toml")
@@ -25,3 +26,22 @@ if not configurationFilePath.is_file():
 logging.info("STARTUP: config.toml exists. Continuing...")
 logging.info("STARTUP: Parsing config.toml...")
 configuration = rtoml.load(configurationFilePath)
+
+
+def updateTwitterPosts():
+    while True:
+        # Configure the search.
+        twitterUpdateFrequency = configuration["twitter"]["updateFrequency"]
+        twintConfiguration = twint.Config()
+        twintConfiguration.Username = configuration["twitter"]["username"]
+        twintConfiguration.Since = (datetime.datetime.now() - datetime.timedelta(seconds=twitterUpdateFrequency)).strftime("%Y-%m-%d %H:%M:%S")
+
+        # Run the search.
+        logging.info(f"TWITTER: Scraping tweets since {twintConfiguration.Since}.")
+        twint.run.Search(twintConfiguration)
+        # Post tweet to Discord.
+        logging.info("TWITTER: Posting tweet to Discord. Not yet implemented.")
+        logging.info(f"TWITTER: Sleeping for {twitterUpdateFrequency} seconds.")
+        time.sleep(twitterUpdateFrequency)
+
+
