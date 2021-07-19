@@ -28,7 +28,7 @@ logging.info("STARTUP: Parsing config.toml...")
 configuration = rtoml.load(configurationFilePath)
 
 
-def updateTwitterPosts():
+def updateTwitterPosts() -> None:
     while True:
         # Configure the search.
         twitterUpdateFrequency = configuration["twitter"]["updateFrequency"]
@@ -44,4 +44,6 @@ def updateTwitterPosts():
         logging.info(f"TWITTER: Sleeping for {twitterUpdateFrequency} seconds.")
         time.sleep(twitterUpdateFrequency)
 
-
+logging.info("Creating and starting Twitter thread.")
+twitterThread = threading.Thread(target=updateTwitterPosts)
+twitterThread.start()
