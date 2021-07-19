@@ -40,7 +40,7 @@ class GraniteClient(discord.Client):
         super().__init__(*args, **kwargs)
         self.updateTwitterPosts.start()
 
-    async def on_ready(self):
+    async def onReady(self):
         logging.info('Logged in as {self.user} (ID: {self.user.id})')
 
     @tasks.loop(seconds=configuration['twitter']['updateFrequency'])
@@ -64,7 +64,7 @@ class GraniteClient(discord.Client):
         logging.info(f"TWITTER: Sleeping for {configuration['twitter']['updateFrequency']} seconds.")
 
     @updateTwitterPosts.before_loop
-    async def wait_for_login(self):
+    async def waitForLogin(self):
         await self.wait_until_ready()  # wait until logged in
 
 
