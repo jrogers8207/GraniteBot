@@ -1,3 +1,6 @@
+# Granitebot: A general purpose bot for Discord.
+# Copyright (C) 2021 Jack Rogers
+
 import datetime
 import logging
 from pathlib import Path
