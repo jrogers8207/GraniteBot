@@ -10,10 +10,13 @@ import discord
 from discord.ext import tasks
 import nest_asyncio
 import rtoml
+from twint.token import RefreshTokenException
+
 import twint
 
 # Perform startup tasks.
 logging.basicConfig(level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s")
+logging.disable(logging.DEBUG)
 nest_asyncio.apply()
 
 # Create and setup configuration file if it doesn't exist
@@ -58,7 +61,11 @@ class GraniteClient(discord.Client):
         twintConfiguration.Store_object_tweets_list = newTweets
         # Run the search.
         logging.info(f"TWITTER: Scraping tweets since {twintConfiguration.Since}.")
-        twint.run.Search(twintConfiguration)
+        try:
+            twint.run.Search(twintConfiguration)
+        except RefreshTokenException:
+            logging.error("A token refresh exception occurred.")
+
         # Post tweet to Discord.
         if newTweets:
             logging.info("TWITTER: Posting tweet(s) to Discord.")
