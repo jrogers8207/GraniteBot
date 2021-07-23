@@ -3,19 +3,21 @@
 
 import datetime
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import discord
 from discord.ext import tasks
 import nest_asyncio
 import rtoml
+import twitch
+import twint
 from twint.token import RefreshTokenException
 
-import twint
-
 # Perform startup tasks.
-logging.basicConfig(level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s"
+)
 logging.disable(logging.DEBUG)
 nest_asyncio.apply()
 
@@ -24,14 +26,28 @@ configurationFilePath = Path("config.toml")
 if not configurationFilePath.is_file():
     logging.info("config.toml doesn't exist. Generating default config.toml")
     configurationFile = open(configurationFilePath, "w")
-    configurationFile.write(r"""[discord]
+    configurationFile.write(
+        r"""[discord]
 token = ""
 
+
+[twitch]
+enabled = false
+clientID = ""
+clientSecret = ""
+updateFrequency = 60
+discordPostChannelID = 
+
+
 [twitter]
+enabled = false
 username = ""  # Twitter handle WITHOUT @ symbol.
 updateFrequency = 60  # Time in seconds
-postChannelID = """)
-    print("First time setup complete. Please edit config.toml to your preferences and restart the program.")
+discordPostChannelID = """
+    )
+    print(
+        "First time setup complete. Please edit config.toml to your preferences and restart the program."
+    )
     configurationFile.close()
     logging.info("Configuration file successfully created. Now exiting...")
     sys.exit(0)
@@ -47,15 +63,17 @@ class GraniteClient(discord.Client):
         self.updateTwitterPosts.start()
 
     async def onReady(self):
-        logging.info('Logged in as {self.user} (ID: {self.user.id})')
+        logging.info("Logged in as {self.user} (ID: {self.user.id})")
 
-    @tasks.loop(seconds=configuration['twitter']['updateFrequency'])
+    @tasks.loop(seconds=configuration["twitter"]["updateFrequency"])
     async def updateTwitterPosts(self) -> None:
         # Configure the search.
         twintConfiguration = twint.Config()
-        twintConfiguration.Username = configuration['twitter']['username']
-        twintConfiguration.Since = (datetime.datetime.now() - datetime.timedelta(
-            seconds=configuration['twitter']['updateFrequency'])).strftime("%Y-%m-%d %H:%M:%S")
+        twintConfiguration.Username = configuration["twitter"]["username"]
+        twintConfiguration.Since = (
+            datetime.datetime.now()
+            - datetime.timedelta(seconds=configuration["twitter"]["updateFrequency"])
+        ).strftime("%Y-%m-%d %H:%M:%S")
         newTweets = []
         twintConfiguration.Store_object = True
         twintConfiguration.Store_object_tweets_list = newTweets
@@ -70,8 +88,12 @@ class GraniteClient(discord.Client):
         if newTweets:
             logging.info("TWITTER: Posting tweet(s) to Discord.")
             for tweet in newTweets:
-                await self.get_channel(configuration['twitter']['postChannelID']).send(tweet.link)
-        logging.info(f"TWITTER: Sleeping for {configuration['twitter']['updateFrequency']} seconds.")
+                await self.get_channel(configuration["twitter"]["discordPostChannelID"]).send(
+                    tweet.link
+                )
+        logging.info(
+            f"TWITTER: Sleeping for {configuration['twitter']['updateFrequency']} seconds."
+        )
 
     @updateTwitterPosts.before_loop
     async def waitForLogin(self):
@@ -80,4 +102,4 @@ class GraniteClient(discord.Client):
 
 logging.info("STARTUP: Starting up client...")
 discordClient = GraniteClient()
-discordClient.run(configuration['discord']['token'])
+discordClient.run(configuration["discord"]["token"])
