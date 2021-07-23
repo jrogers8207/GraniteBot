@@ -3,5 +3,6 @@ venv/
 
 log.txt
 config.toml
+nohup.out
 
 twint/
