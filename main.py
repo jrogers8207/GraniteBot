@@ -58,8 +58,8 @@ configuration = rtoml.load(configurationFilePath)
 
 if configuration["twitch"]["enabled"]:
     client = twitch.TwitchHelix(
-        client_id="2xt30zhffl74zj2c3io2quy8go8b5r",
-        client_secret="svp7sjmit050yc1pxvxf8hegkp1x3h",
+        client_id=configuration["twitch"]["clientID"],
+        client_secret=configuration["twitch"]["clientSecret"],
         scopes=["analytics:read:extensions"],
     )
 
