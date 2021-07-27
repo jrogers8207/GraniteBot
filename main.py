@@ -119,7 +119,7 @@ class GraniteClient(discord.Client):
             if stream and datetime.datetime.utcnow() - stream[0][
                 "started_at"
             ] < datetime.timedelta(
-                seconds=configuration["twitch"]["updateFrequency"] + 5
+                seconds=configuration["twitch"]["updateFrequency"] + 15
             ):
                 await self.get_channel(
                     configuration["twitch"]["discordPostChannelID"]
