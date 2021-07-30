@@ -3,8 +3,8 @@
 
 import datetime
 import logging
-import sys
 from pathlib import Path
+import sys
 
 import discord
 from discord.ext import tasks
@@ -28,6 +28,7 @@ if not configurationFilePath.is_file():
     configurationFile.write(
         r"""[discord]
 token = ""
+status = ""
 
 
 [twitch]
@@ -134,7 +135,40 @@ class GraniteClient(discord.Client):
     async def waitForLoginTwitch(self):
         await self.wait_until_ready()
 
+# Set Discord status.
+if configuration["discord"]["status"].startswith("Playing"):
+    activity = discord.Activity(
+        type=discord.ActivityType.playing,
+        name=configuration["discord"]["status"].replace("Playing", "", 1),
+    )
+elif configuration["discord"]["status"].startswith("Watching"):
+    activity = discord.Activity(
+        type=discord.ActivityType.playing,
+        name=configuration["discord"]["status"].replace("Watching", "", 1),
+    )
+elif configuration["discord"]["status"].startswith("Listening"):
+    activity = discord.Activity(
+        type=discord.ActivityType.playing,
+        name=configuration["discord"]["status"].replace("Listening", "", 1),
+    )
+elif configuration["discord"]["status"].startswith("Competing"):
+    activity = discord.Activity(
+        type=discord.ActivityType.playing,
+        name=configuration["discord"]["status"].replace("Competing", "", 1),
+    )
+else:
+    activity = discord.Activity(
+        type=discord.ActivityType.playing,
+        name=configuration["discord"]["status"].replace("Competing", "", 1),
+    )
+
+
+
 
 logging.info("STARTUP: Starting up client...")
-discordClient = GraniteClient()
+discordClient = GraniteClient(activity=activity)
+discordClient.run(configuration["discord"]["token"])
+
+logging.info("STARTUP: Starting up client...")
+discordClient = GraniteClient(activity=activity)
 discordClient.run(configuration["discord"]["token"])
