@@ -67,44 +67,43 @@ if configuration["twitch"]["enabled"]:
 class GraniteClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.updateTwitterPosts.start()
-        self.twitchLiveAlert.start()
+        if configuration["twitter"]["enabled"]:
+            self.updateTwitterPosts.start()
+        if configuration["twitch"]["enabled"]:
+            self.twitchLiveAlert.start()
 
     async def onReady(self):
         logging.info("Logged in as {self.user} (ID: {self.user.id})")
 
     @tasks.loop(seconds=configuration["twitter"]["updateFrequency"])
     async def updateTwitterPosts(self) -> None:
-        if configuration["twitter"]["enabled"]:
-            # Configure the search.
-            twintConfiguration = twint.Config()
-            twintConfiguration.Username = configuration["twitter"]["username"]
-            twintConfiguration.Since = (
-                datetime.datetime.now()
-                - datetime.timedelta(
-                    seconds=configuration["twitter"]["updateFrequency"]
-                )
-            ).strftime("%Y-%m-%d %H:%M:%S")
-            newTweets = []
-            twintConfiguration.Store_object = True
-            twintConfiguration.Store_object_tweets_list = newTweets
-            # Run the search.
-            logging.info(f"TWITTER: Scraping tweets since {twintConfiguration.Since}.")
-            try:
-                twint.run.Search(twintConfiguration)
-            except RefreshTokenException:
-                logging.error("A token refresh exception occurred.")
+        # Configure the search.
+        twintConfiguration = twint.Config()
+        twintConfiguration.Username = configuration["twitter"]["username"]
+        twintConfiguration.Since = (
+            datetime.datetime.now()
+            - datetime.timedelta(seconds=configuration["twitter"]["updateFrequency"])
+        ).strftime("%Y-%m-%d %H:%M:%S")
+        newTweets = []
+        twintConfiguration.Store_object = True
+        twintConfiguration.Store_object_tweets_list = newTweets
+        # Run the search.
+        logging.info(f"TWITTER: Scraping tweets since {twintConfiguration.Since}.")
+        try:
+            twint.run.Search(twintConfiguration)
+        except RefreshTokenException:
+            logging.error("A token refresh exception occurred.")
 
-            # Post tweet to Discord.
-            if newTweets:
-                logging.info("TWITTER: Posting tweet(s) to Discord.")
-                for tweet in newTweets:
-                    await self.get_channel(
-                        configuration["twitter"]["discordPostChannelID"]
-                    ).send(tweet.link)
-            logging.info(
-                f"TWITTER: Sleeping for {configuration['twitter']['updateFrequency']} seconds."
-            )
+        # Post tweet to Discord.
+        if newTweets:
+            logging.info("TWITTER: Posting tweet(s) to Discord.")
+            for tweet in newTweets:
+                await self.get_channel(
+                    configuration["twitter"]["discordPostChannelID"]
+                ).send(tweet.link)
+        logging.info(
+            f"TWITTER: Sleeping for {configuration['twitter']['updateFrequency']} seconds."
+        )
 
     @updateTwitterPosts.before_loop
     async def waitForLoginTwitter(self):
@@ -112,24 +111,24 @@ class GraniteClient(discord.Client):
 
     @tasks.loop(seconds=configuration["twitch"]["updateFrequency"])
     async def twitchLiveAlert(self):
-        if configuration["twitch"]["enabled"]:
-            logging.info("TWITCH: Checking if Twitch stream recently went live.")
-            client.get_oauth()
-            stream = client.get_streams(user_logins=configuration["twitch"]["username"])
-            if stream and datetime.datetime.utcnow() - stream[0][
-                "started_at"
-            ] < datetime.timedelta(
-                seconds=configuration["twitch"]["updateFrequency"] + 15
-            ):
-                await self.get_channel(
-                    configuration["twitch"]["discordPostChannelID"]
-                ).send(
-                    "@everyone "
-                    + configuration["twitch"]["username"]
-                    + " is now live on Twitch! https://twitch.tv/"
-                    + configuration["twitch"]["username"]
-                )
-            logging.info("TWITCH: Sleeping for 60 seconds.")
+        # Check if Twitch stream is newly live.
+        logging.info("TWITCH: Checking if Twitch stream recently went live.")
+        client.get_oauth()
+        stream = client.get_streams(user_logins=configuration["twitch"]["username"])
+        if stream and datetime.datetime.utcnow() - stream[0][
+            "started_at"
+        ] < datetime.timedelta(seconds=configuration["twitch"]["updateFrequency"] + 15):
+            # Post alert message to Discord.
+            logging.info("DISCORD: Posting alert(s) to Discord.")
+            await self.get_channel(
+                configuration["twitch"]["discordPostChannelID"]
+            ).send(
+                "@everyone "
+                + configuration["twitch"]["username"]
+                + " is now live on Twitch! https://twitch.tv/"
+                + configuration["twitch"]["username"]
+            )
+        logging.info("TWITCH: Sleeping for 60 seconds.")
 
     @twitchLiveAlert.before_loop
     async def waitForLoginTwitch(self):
