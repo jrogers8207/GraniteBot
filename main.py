@@ -135,6 +135,7 @@ class GraniteClient(discord.Client):
     async def waitForLoginTwitch(self):
         await self.wait_until_ready()
 
+
 # Set Discord status.
 if configuration["discord"]["status"].startswith("Playing"):
     activity = discord.Activity(
@@ -162,12 +163,6 @@ else:
         name=configuration["discord"]["status"].replace("Competing", "", 1),
     )
 
-
-
-
-logging.info("STARTUP: Starting up client...")
-discordClient = GraniteClient(activity=activity)
-discordClient.run(configuration["discord"]["token"])
 
 logging.info("STARTUP: Starting up client...")
 discordClient = GraniteClient(activity=activity)
