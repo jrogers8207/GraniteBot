@@ -110,15 +110,15 @@ class GraniteClient(discord.Client):
     async def waitForLoginTwitter(self):
         await self.wait_until_ready()  # wait until logged in
 
+    currentlyLive = False
+
     @tasks.loop(seconds=configuration["twitch"]["updateFrequency"])
     async def twitchLiveAlert(self):
         # Check if Twitch stream is newly live.
         logging.info("TWITCH: Checking if Twitch stream recently went live.")
         client.get_oauth()
         stream = client.get_streams(user_logins=configuration["twitch"]["username"])
-        if stream and datetime.datetime.utcnow() - stream[0][
-            "started_at"
-        ] < datetime.timedelta(seconds=configuration["twitch"]["updateFrequency"] + 15):
+        if stream and self.currentlyLive == False:
             # Post alert message to Discord.
             logging.info("DISCORD: Posting alert(s) to Discord.")
             await self.get_channel(
@@ -129,6 +129,10 @@ class GraniteClient(discord.Client):
                 + " is now live on Twitch! https://twitch.tv/"
                 + configuration["twitch"]["username"]
             )
+            self.currentlyLive = True
+        elif not stream:
+            self.currentlyLive = False
+
         logging.info("TWITCH: Sleeping for 60 seconds.")
 
     @twitchLiveAlert.before_loop
